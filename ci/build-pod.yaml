@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  namespace: jenkins
+  labels:
+    jenkins/jenkins-jenkins-agent: true
+spec:
+  volumes:
+    - name: secret-volume
+      secret:
+        secretName: pks-cicd
+  containers:
+    - name: k8s
+      image: kpack/kp
+      command:
+        - sleep
+      volumeMounts:
+        - name: secret-volume
+          mountPath: "/tmp/data"
+          readOnly: false
+      env:
+        - name: KUBECONFIG
+          value: "/tmp/data/kubeconfig-sa"
+      args:
+        - infinity
