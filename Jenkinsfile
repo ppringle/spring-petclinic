@@ -4,17 +4,23 @@ pipeline {
             label 'spring-petclinic' // all your pods will be named with this prefix, followed by a unique id
             idleMinutes 5 // how long the pod will live after no jobs have run on it
             yamlFile 'ci/build-pod.yaml' // path to the pod definition relative to the root of our project
-            defaultContainer 'jnlp' // define a default container if more than a few stages use it, will default to jnlp container
+            defaultContainer 'jnlp'
+            // define a default container if more than a few stages use it, will default to jnlp container
         }
     }
 
     environment {
-        APP_NAME = "${env.APP_NAME}"
-        REPO_NAME = "spring-petclinic"
-
+        APP_NAME = "spring-petclinic"
+        REPO_URL = "git@github.com:ppringle/spring-petclinic.git"
     }
 
     stages {
+
+        stage("Env Variables") {
+            steps {
+                sh "printenv"
+            }
+        }
 
         stage('Fetch from GitHub') {
             steps {
@@ -24,7 +30,7 @@ pipeline {
                             changelog: true,
                             branch: "main",
                             credentialsId: "github-ppringle",
-                            url: "git@github.com:ppringle/${REPO_NAME}.git"
+                            url: "${REPO_URL}"
                     )
                     sh 'git rev-parse HEAD > git-commit.txt'
                 }
@@ -34,13 +40,24 @@ pipeline {
         stage('Create Image') {
             steps {
                 container('k8s') {
-                    sh '''#!/bin/sh -e
+                    sshagent(['github-ppringle']) {
+                        sh '''#!/bin/sh -e
                         export GIT_COMMIT=$(cat app/git-commit.txt)
-                        kubectl config set-context jenkins-tbs-cluster
+                        kp image list
+                        kp secret list
+                        kubectl get sa
+                        kp image save ${APP_NAME} \
+                            --git https://github.com/ppringle/spring-petclinic \
+                            -t index.docker.io/ppringle/spring-petclinic \
+                            --env BP_GRADLE_BUILD_ARGUMENTS='--no-daemon build' \
+                            --git-revision ${GIT_COMMIT} -w
+                        kp build logs ${APP_NAME} 
                     '''
+                    }
                 }
             }
         }
+
 //
 //        stage('Update Deployment Manifest') {
 //            steps {

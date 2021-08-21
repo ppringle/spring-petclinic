@@ -1,11 +1,11 @@
+#!/bin/bash
 # Update these to match your environment
-SERVICE_ACCOUNT_NAME=kpack-deploy-sa
-CONTEXT=kind-tanzu-build-service
-NAMESPACE=build-service
+SERVICE_ACCOUNT_NAME=$1
+CONTEXT=$(kubectl config current-context)
+NAMESPACE=$2
 
-NEW_CONTEXT=default
-KUBECONFIG_FILE="kubeconfig-sa"
-
+NEW_CONTEXT=$3
+KUBECONFIG_FILE=$3
 
 SECRET_NAME=$(kubectl get serviceaccount ${SERVICE_ACCOUNT_NAME} \
   --context ${CONTEXT} \
