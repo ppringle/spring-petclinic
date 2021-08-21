@@ -37,9 +37,6 @@ pipeline {
                     sh '''#!/bin/sh -e
                         export GIT_COMMIT=$(cat app/git-commit.txt)
                         kubectl config set-context jenkins-tbs-cluster
-//
-//                        kubectl config current-context
-//                        kubectl get po
                     '''
                 }
             }

@@ -9,17 +9,24 @@ spec:
     - name: secret-volume
       secret:
         secretName: pks-cicd
+    - name: preload-config-volume
+      emptyDir: {}
+  initContainers:
+  - name: copy-ro-scripts
+    image: busybox
+    command: [ 'sh', '-c', 'cp /tmp/data/* /tmp/config/*' ]
+    volumeMounts:
+    - name: secret-volume
+      mountPath: /tmp/data
+    - name: preload-config-volume
+      mountPath: /tmp/config
   containers:
     - name: k8s
       image: kpack/kp
       command:
         - sleep
-      volumeMounts:
-        - name: secret-volume
-          mountPath: "/tmp/data"
-          readOnly: false
       env:
         - name: KUBECONFIG
-          value: "/tmp/data/kubeconfig-sa"
+          value: "/tmp/config/kubeconfig-sa"
       args:
         - infinity
